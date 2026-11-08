@@ -210,7 +210,7 @@ header { align-items: center; }
 @keyframes up { from { transform: translateY(40px); opacity: 0 } to { transform: none; opacity: 1 } }
 @keyframes fade { from { opacity: 0 } }
 
-.laugh { align-self: center; margin-top: -12px; background: none; border: 0; padding: 8px 4px; cursor: pointer; font-weight: 600; font-size: .88rem; color: var(--accent); }
+.laugh-unused { align-self: center; margin-top: -12px; background: none; border: 0; padding: 8px 4px; cursor: pointer; font-weight: 600; font-size: .88rem; color: var(--accent); }
 .laugh:hover { text-decoration: underline; }
 .seg { grid-template-columns: repeat(var(--cols, 3), 1fr); }
 #jokes .seg { --cols: 2; }
@@ -240,6 +240,25 @@ header { align-items: center; }
 .pick::after { content: ""; position: absolute; right: 4px; top: 50%; width: 7px; height: 7px; border-right: 2px solid var(--ink-faint); border-bottom: 2px solid var(--ink-faint); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
 .pick option { background: var(--bg-deep); color: var(--ink); }
 #match-fields .pair-note { padding-top: 12px; border-top: 1px solid var(--line); font-size: .95rem; }
+
+/* History */
+.foot { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px 6px; margin-top: -12px; }
+.foot-link { background: none; border: 0; padding: 8px 4px; cursor: pointer; font-weight: 600; font-size: .88rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+.foot-link:hover { text-decoration: underline; }
+.foot .dot { color: var(--ink-faint); }
+.tools { grid-template-columns: 1fr auto auto; }
+.saved-toggle[aria-pressed="true"] svg { stroke: currentColor; }
+#history-only svg { fill: none; }
+.seen-tag { display: block; margin-top: 4px; font: 600 .78rem var(--f-ui); color: var(--ink-faint); }
+li.is-seen .lq { color: var(--ink-soft); }
+.hist-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0 6px; }
+.hist-head .label { margin: 0; }
+.opt-gap { margin-top: 18px; }
+.opt-val { color: var(--ink-soft); font-weight: 600; font-variant-numeric: tabular-nums; }
+.opt-btn { display: block; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 14px 0; color: var(--accent); font-weight: 600; font-size: 1rem; cursor: pointer; }
+.opt-btn:last-of-type { border-bottom: 1px solid var(--line); }
+.opt-btn:hover { color: var(--accent-hover); }
+.toast { position: fixed; z-index: 50; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100% - 32px); background: var(--accent); color: var(--accent-ink); padding: 12px 18px; border-radius: 12px; font-weight: 600; font-size: .92rem; box-shadow: var(--shadow); animation: up .3s cubic-bezier(.22,.8,.3,1); text-align: center; }
 
 /* Types */
 .type-pick { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
@@ -303,13 +322,23 @@ header { align-items: center; }
       </button>
     </div>
     <p class="how">Tap or swipe up to peel · swipe sideways for a new one</p>
-    <button type="button" class="laugh" id="open-jokes" aria-haspopup="dialog">Need a laugh?</button>
+    <div class="foot">
+      <button type="button" class="foot-link" id="open-history"><span id="session-n">0</span> this session</button>
+      <span class="dot" aria-hidden="true">·</span>
+      <button type="button" class="foot-link" id="new-deck">New deck</button>
+      <span class="dot" aria-hidden="true">·</span>
+      <button type="button" class="foot-link" id="open-jokes" aria-haspopup="dialog">Need a laugh?</button>
+    </div>
   </section>
 
   <section id="browse" aria-label="Browse all questions" hidden>
     <div style="display:flex;flex-direction:column;gap:16px">
       <div class="tools">
         <input type="search" id="search" class="search" placeholder="Search questions" autocomplete="off" aria-label="Search questions">
+        <button type="button" class="btn saved-toggle" id="history-only" aria-pressed="false" aria-label="Show this session's questions">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+          <span class="n" id="history-n">0</span>
+        </button>
         <button type="button" class="btn saved-toggle" id="saved-only" aria-pressed="false" aria-label="Show saved questions">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.3-8.9-8.6C1.7 8.2 3.6 5 6.9 5c2 0 3.3 1.1 5.1 2.9C13.8 6.1 15.1 5 17.1 5c3.3 0 5.2 3.2 3.8 6.4C19 15.7 12 20 12 20z"/></svg>
           <span class="n" id="saved-n">0</span>
@@ -337,7 +366,14 @@ header { align-items: center; }
     <label class="pick" for="type-you"><span>You</span><select id="type-you"></select></label>
     <label class="pick" for="type-them"><span>Them</span><select id="type-them"></select></label>
   </div>
+  <div class="opt opt-gap">
+    <span class="opt-title">Questions seen</span>
+    <span class="opt-val" id="seen-total">0</span>
+  </div>
+  <button type="button" class="opt-btn" id="new-session">Start a new session</button>
+  <button type="button" class="opt-btn" id="reset-seen">Make every question new again</button>
 </div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <div class="sheet" id="jokes" role="dialog" aria-modal="true" aria-labelledby="jokes-title" hidden>
   <div class="sheet-head">
@@ -8588,6 +8624,578 @@ const JOKES = {
   ]
  }
 };
+const FRESH = [
+ [
+  "Has anything about me surprised you so far?",
+  "Good surprise, or a 'didn't see that coming' one?",
+  "What's been your favourite part of us getting to know each other?"
+ ],
+ [
+  "Would you send me a reel that made you laugh, or is it too early for that?",
+  "What kind of things do you send people when they cross your mind?",
+  "On a long day, what kind of message would make you smile?"
+ ],
+ [
+  "How's your week looking: packed or pretty chill?",
+  "When work gets hectic, do you go quiet or stay chatty?",
+  "On a busy week, what would feel nice from someone you're seeing?"
+ ],
+ [
+  "Hawker date or café date next time?",
+  "Which stall would you make me try to prove a point?",
+  "Is there a spot in Singapore tied to a happy memory for you?"
+ ],
+ [
+  "Do you feel more relaxed with me now than on our first date?",
+  "What do you think helped?",
+  "What do people do that makes you feel you don't have to try so hard?"
+ ],
+ [
+  "Are you someone who remembers little details about people, like how they take their coffee?",
+  "Who in your life remembers the small things about you?",
+  "How does it feel when someone remembers something you only mentioned once?"
+ ],
+ [
+  "Indoor date or outdoor date, given Singapore weather?",
+  "If it suddenly pours, what's our backup plan?",
+  "What's an ordinary thing you'd love to do with someone just for the company?"
+ ],
+ [
+  "Do you blush easily?",
+  "What usually sets it off?",
+  "What kind of compliment actually gets to you, in a good way?"
+ ],
+ [
+  "Which of our dates so far has been your favourite?",
+  "What made that one stand out?",
+  "What would you love us to do more of?"
+ ],
+ [
+  "Which of your friends would grill me the most?",
+  "What would they ask first?",
+  "What do you love about the way your friends look out for you?"
+ ],
+ [
+  "Are you different around your family than around your friends?",
+  "Quieter, louder, or more like a kid again?",
+  "What do you hope someone close to you would come to appreciate about your family?"
+ ],
+ [
+  "Surprise date planned by me, or plan it together?",
+  "What's one rule I'd have to follow?",
+  "What does it mean to you when someone plans something with you in mind?"
+ ],
+ [
+  "If I turned up with a snack for you, what should it be?",
+  "Is that your comfort snack or your treat snack?",
+  "What kind of small gesture makes you feel thought of?"
+ ],
+ [
+  "Video call or voice call?",
+  "Be honest, do you multitask during calls?",
+  "What makes a phone conversation feel really good to you?"
+ ],
+ [
+  "Weeknight dinner, or save it for the weekend?",
+  "What does a good weeknight hangout look like when we're both tired?",
+  "How do you make time for people when life's full?"
+ ],
+ [
+  "Pulau Ubin by bike or a beach day on Sentosa?",
+  "When were you last at either?",
+  "Where in Singapore do you go when you want to feel like you've escaped the city?"
+ ],
+ [
+  "Night Safari or a late supper run?",
+  "What are we ordering on the supper run?",
+  "What do late-night conversations bring out in you?"
+ ],
+ [
+  "Picnic at the Botanic Gardens or a rooftop movie?",
+  "What would you pack, or what would you order?",
+  "What makes a date feel effortless to you?"
+ ],
+ [
+  "Arcade or mini golf for a bit of friendly competition?",
+  "Should I let you win, or would you be offended?",
+  "What does a bit of playful teasing tell you about how comfortable two people are?"
+ ],
+ [
+  "Are you the hold-the-door, offer-your-jacket type?",
+  "Where did you pick that up?",
+  "Do you enjoy taking care of someone, and how does it usually show?"
+ ],
+ [
+  "Quiet pause in a conversation: comfortable, or do you rush to fill it?",
+  "Has that changed as we've got to know each other?",
+  "What does a comfortable silence with someone feel like to you?"
+ ],
+ [
+  "Homebody or out-and-about: which would you rather date?",
+  "And which are you, really?",
+  "What kind of rhythm do you hope to find with someone, day to day?"
+ ],
+ [
+  "Should we cook something together one day, or is that too ambitious?",
+  "What would we make?",
+  "What do you enjoy about doing something hands-on with someone?"
+ ],
+ [
+  "Do I have any little habit you've already noticed?",
+  "Cute, funny, or still deciding?",
+  "Which little quirks do you end up finding endearing in people?"
+ ],
+ [
+  "Have I made you laugh properly yet?",
+  "What kind of humour gets you every time?",
+  "Why does laughing with someone matter so much to you?"
+ ],
+ [
+  "Rough day: would you rather talk about it or be distracted?",
+  "What's the best kind of distraction?",
+  "How can someone tell you need a bit of extra care?"
+ ],
+ [
+  "Hugger or not really a hugger?",
+  "Who in your life gives the best hugs?",
+  "How do you like to show warmth when words feel like too much?"
+ ],
+ [
+  "If I texted 'free now?' on a random Tuesday, would you come out?",
+  "What's the latest you'd still say yes?",
+  "What do little last-minute meetups add, compared to planned dates?"
+ ],
+ [
+  "Do you keep one day of the weekend just for yourself?",
+  "What usually goes into that day?",
+  "How do you like to ask for a quiet day without anyone taking it personally?"
+ ],
+ [
+  "Your neighbourhood or mine to explore first?",
+  "What's the one spot I'd have to see in yours?",
+  "What do you think your neighbourhood says about you?"
+ ],
+ [
+  "Around for the holidays this year, or flying off somewhere?",
+  "What does December usually look like for you?",
+  "What do you love most about the end of the year?"
+ ],
+ [
+  "Which of us do you think talks more?",
+  "Is that normal for you, or am I a special case?",
+  "Who do you find you can talk to for hours?"
+ ],
+ [
+  "Do you think we have similar taste in food?",
+  "What's one thing we've disagreed on so far, food or otherwise?",
+  "Which differences between two people do you think make things more fun?"
+ ],
+ [
+  "Up for a breakfast date, or is that too early for you?",
+  "Where would we go?",
+  "What's a slow morning with someone like at its best?"
+ ],
+ [
+  "Got anything coming up this month you'd like me to ask about afterwards?",
+  "Excited, nervous, or a bit of both?",
+  "What kind of encouragement actually helps you?"
+ ],
+ [
+  "Do you think you're easy to get to know?",
+  "What would you tell someone who wanted to know you faster?",
+  "What tells you someone's genuinely curious about you?"
+ ],
+ [
+  "Is there anything you've been wanting to ask me but haven't yet?",
+  "What's been stopping you?",
+  "What do you love learning about someone once you feel comfortable?"
+ ],
+ [
+  "Got any plans this weekend?",
+  "Anything you're secretly hoping gets cancelled?",
+  "Who do you most love spending your weekends with these days?"
+ ],
+ [
+  "Karaoke with me: yes, or absolutely not?",
+  "Duets, or do you guard the mic?",
+  "What does it feel like when you can let loose around someone without worrying?"
+ ],
+ [
+  "Any food you won't eat that I should know about?",
+  "Allergy, texture thing, or just a firm no?",
+  "What's a dish that would feel like a real treat if someone made it for you?"
+ ],
+ [
+  "Who in your family do you think I'd get along with best?",
+  "What makes you say that?",
+  "What do you love about the people you grew up with?"
+ ],
+ [
+  "If I met your friends, what story would they tell about you first?",
+  "Would it be embarrassing or flattering?",
+  "What do you hope someone you're dating sees when they meet your friends?"
+ ],
+ [
+  "Do you look forward to our dates during the week?",
+  "Which bit do you look forward to most?",
+  "How can you tell when you're really enjoying someone's company?"
+ ],
+ [
+  "Jewel's rain vortex late at night or Marina Barrage at sunset?",
+  "Which one have you been to?",
+  "What makes a simple outing feel romantic to you?"
+ ],
+ [
+  "Do you prefer dates that end early on a weeknight, or are you fine with a late one?",
+  "What time do you usually start fading?",
+  "What does a good evening look like for you after a long, draining day?"
+ ],
+ [
+  "Do you like getting a 'reached home?' text?",
+  "Do you send one too?",
+  "What's a small habit that tells you someone's considerate?"
+ ],
+ [
+  "Is there a restaurant you've been saving for a special occasion?",
+  "What makes it worth saving?",
+  "What kind of moments do you think deserve a little celebration?"
+ ],
+ [
+  "Vent after work, or leave it at the office?",
+  "Who usually hears about your day?",
+  "How can someone support you without trying to fix everything?"
+ ],
+ [
+  "Do you like walking someone to their MRT station after a date?",
+  "What do you usually talk about on the walk?",
+  "What's a small thing at the end of a date that leaves you smiling on the way home?"
+ ],
+ [
+  "Work talk on dates: fine, or would you rather switch off?",
+  "What's something about your job you actually enjoy telling people?",
+  "What do you hope someone understands about what your work means to you?"
+ ],
+ [
+  "Could you teach me a phrase in your mother tongue or dialect?",
+  "Which one would you pick first?",
+  "How does it feel when someone takes an interest in where you come from?"
+ ],
+ [
+  "Just the two of us, or a date with friends along sometimes?",
+  "Have you ever been on a double date?",
+  "What helps you feel at ease when you meet someone's friends?"
+ ],
+ [
+  "I should know this by now: kopi, teh, or neither?",
+  "How do you take it?",
+  "What little things would you love someone to just know about you without asking?"
+ ],
+ [
+  "Morning run together: romantic or torture?",
+  "What's your workout of choice, if any?",
+  "What do you enjoy about doing healthy things with someone?"
+ ],
+ [
+  "Can you say your full kopi or teh order in kopitiam code, like 'kopi-o kosong siew dai'?",
+  "Who taught you the lingo, or did you learn it by getting your order wrong?",
+  "Which little bits of everyday life here would you miss most if you ever lived abroad?"
+ ],
+ [
+  "Do you board the MRT at the same door every time so you come out right by the exit?",
+  "Any other little efficiency tricks you're secretly proud of?",
+  "Where in life do you love optimising, and where are you happy to just let things be?"
+ ],
+ [
+  "Open your camera roll and go 37 photos back: brave enough to show me?",
+  "What was happening when you took it?",
+  "If you scrolled through this year's photos, what would they say you've been making time for?"
+ ],
+ [
+  "Last thing you screenshotted: can you remember without checking?",
+  "Do you ever go back to your screenshots, or do they just pile up?",
+  "Is there a quote or bit of advice you saved that you still come back to?"
+ ],
+ [
+  "Caught in a sudden downpour with no umbrella: make a run for it, or wait it out under shelter?",
+  "When did you last get properly drenched, and how did it happen?",
+  "When has an unplanned pause in your day turned into something nice?"
+ ],
+ [
+  "Which hawker dish do you think is a little overrated?",
+  "Have you ever said that out loud and started an argument?",
+  "Which of your tastes, food or otherwise, has changed the most since you were younger?"
+ ],
+ [
+  "MSN Messenger, Friendster, or were you too young for those?",
+  "What kind of status messages were you posting back then?",
+  "What was teenage you trying hardest to show the world?"
+ ],
+ [
+  "Is your phone on ring, or permanently on silent?",
+  "Did you have a ringtone you were proud of back in the polyphonic days?",
+  "When do you most like being totally unreachable, and what do you do with that time?"
+ ],
+ [
+  "Guess which subject I was best at in school?",
+  "What made you guess that, and how close were you?",
+  "Which of your strengths now can you trace all the way back to your school days?"
+ ],
+ [
+  "Pick anything on this table and sell it to me like a late-night infomercial?",
+  "Have you ever had to sell or pitch something for real?",
+  "What do you believe in enough that you'd happily try to convince anyone?"
+ ],
+ [
+  "Loom bands, Flappy Bird, Pokémon Go or the ice bucket challenge: which one got you?",
+  "Who were you doing it with, and how far did you take it?",
+  "What do you enjoy throwing yourself into, even if it only lasts a season?"
+ ],
+ [
+  "Ice cream uncle: rainbow bread or wafer?",
+  "Which flavour did you always get, and where was your uncle usually parked?",
+  "Which little everyday joy here do you hope never disappears?"
+ ],
+ [
+  "Can you still sing an NDP song from start to finish?",
+  "Which one is yours, and where were you in life when it was everywhere?",
+  "What makes you feel quietly proud of where you're from?"
+ ],
+ [
+  "When were you last a little bit starstruck?",
+  "Did you say hello, or play it cool?",
+  "Who in your everyday life deserves their own fan club?"
+ ],
+ [
+  "What's the oldest thing you're wearing or carrying right now?",
+  "How long have you had it, and how did it end up with you?",
+  "What's something in your life you hope you'll still be enjoying twenty years from now?"
+ ],
+ [
+  "Have you ever been caught singing or dancing when you thought nobody was watching?",
+  "What were you belting out?",
+  "Who are the people you can be completely unselfconscious around?"
+ ],
+ [
+  "Did you ever go to Changi Airport just to hang out, study or watch the planes?",
+  "What's your ritual at Changi before a flight?",
+  "Who would you most love to see waiting for you at arrivals?"
+ ],
+ [
+  "First night of a holiday or first night back in your own bed: which feels better?",
+  "What's the first thing you do when you get home from a trip?",
+  "What part of your normal life do you appreciate most after some time away?"
+ ],
+ [
+  "Which toy or gadget did everyone in your class suddenly have?",
+  "Did you get one too, or did you have to beg?",
+  "What do you want now that would totally surprise ten-year-old you?"
+ ],
+ [
+  "Which dish on this menu would you never order, and why?",
+  "Have you ever ordered something by accident and just had to go with it?",
+  "Who's someone in your life who nudges you to try things you'd normally skip?"
+ ],
+ [
+  "If the staff here had to guess what we each do for work, what would they say?",
+  "What do people usually guess about your job when they first meet you?",
+  "Which part of your work actually suits your personality, and which part doesn't?"
+ ],
+ [
+  "Does your neighbourhood get teased about anything, like the Yishun jokes?",
+  "Fair, or totally unfair?",
+  "What do you love about your area that outsiders never get to see?"
+ ],
+ [
+  "Rice cooker, air fryer or kettle: which could you not live without?",
+  "What's the last gadget or tool that genuinely made life easier?",
+  "What has made your everyday life feel a bit gentler this year?"
+ ],
+ [
+  "Show me the last food photo in your camera roll?",
+  "Was it as good as it looks?",
+  "Which meal from this past year do you never want to forget?"
+ ],
+ [
+  "Stuck on a stalled Circle Line train or crawling in a PIE jam: which would you pick?",
+  "How do you pass the time when you're stuck somewhere?",
+  "Who's someone you could be stuck with for hours and never get bored?"
+ ],
+ [
+  "What's the most Singaporean thing you do without even thinking?",
+  "Has anyone from overseas ever pointed it out to you?",
+  "What about growing up here do you think shaped you the most?"
+ ],
+ [
+  "MRT door chime, the kopi uncle calling out orders, or the koel bird at 6am: which sound is most Singapore to you?",
+  "Is there one you secretly love, and one that drives you mad?",
+  "What does a really good day sound like to you, from start to finish?"
+ ],
+ [
+  "If you could change the song playing here right now, what would you put on?",
+  "What do you play when you're getting ready to go out?",
+  "When does music matter most to you: celebrating, getting through something, or winding down?"
+ ],
+ [
+  "What was on your first MP3 player or iPod, honestly?",
+  "Where did you get all your songs back then?",
+  "Which song from your teenage years still feels exactly like you?"
+ ],
+ [
+  "Did you ever keep a blog, a Tumblr, or write long Facebook notes?",
+  "What did you write about?",
+  "What do you still love putting into words, even now?"
+ ],
+ [
+  "Were you a Timezone kid: DDR, Daytona, or the coin pusher?",
+  "Who did you go with, and who always ran out of tokens first?",
+  "Who in your life has always made ordinary outings feel like an adventure?"
+ ],
+ [
+  "Type 'I am' on your phone and let predictive text finish it: what does it say?",
+  "Weirdly accurate, or totally off?",
+  "What words have you been saying a lot lately, and why do you think that is?"
+ ],
+ [
+  "Shall we make up a backstory for the people at the next table?",
+  "Do you often invent little stories about strangers in your head?",
+  "What do you hope a stranger could tell about you just from watching you?"
+ ],
+ [
+  "In group photos, are you a peace sign, a silly face, or hiding at the back?",
+  "Who's always the one holding the camera in your group?",
+  "Who do you wish you had more photos with?"
+ ],
+ [
+  "Side fringe, skinny jeans or Crocs: which 2000s look did you fully commit to?",
+  "Is there photo evidence, and will you show me?",
+  "What did that version of you love that you still love today?"
+ ],
+ [
+  "Which auntie or uncle habit have you already picked up, like carrying Tiger Balm everywhere?",
+  "Who did you get it from?",
+  "Which parts of growing up are you enjoying more than you expected?"
+ ],
+ [
+  "When did you last completely lose track of time?",
+  "What were you doing, and who were you with?",
+  "What do you think it says about you that that's where the hours disappear?"
+ ],
+ [
+  "Tell me the plot of a film you love in ten seconds, go?",
+  "Who did you first watch it with?",
+  "Which character have you seen a little of yourself in?"
+ ],
+ [
+  "Which famous Singapore spot have you somehow never been to?",
+  "How have you managed to avoid it all this time?",
+  "What's something close to home that you've been taking for granted?"
+ ],
+ [
+  "Could you draw me a quick map of where you grew up on a napkin?",
+  "Which spot would you circle as the most important?",
+  "Who were the people who made that place feel like yours?"
+ ],
+ [
+  "Got a photo from around this time last year you could show me?",
+  "Did you have any idea back then what the year ahead would bring?",
+  "What have you figured out this year that you're glad about?"
+ ],
+ [
+  "Top deck, front seat of a double-decker bus: do you still go for it?",
+  "What did you pretend you were doing up there as a kid?",
+  "What do you hope you never stop getting excited about?"
+ ],
+ [
+  "Do you press the 'close door' button in lifts, or let it close on its own?",
+  "What other tiny bits of impatience do you have?",
+  "Who makes you feel like you don't need to rush?"
+ ],
+ [
+  "Did someone cut fruit for you growing up and leave it by your desk?",
+  "Does anyone still do that for you now?",
+  "How do small, unspoken acts of care land with you compared to big gestures?"
+ ],
+ [
+  "Quick quiz: can you name every MRT line by its colour?",
+  "Which station name do you think is the most fun to say?",
+  "Which part of the city would you love to make a new memory in?"
+ ],
+ [
+  "Do you have a secret shortcut through a mall, a carpark or an HDB block?",
+  "How did you discover it?",
+  "What have you worked out on your own that you're quietly proud of?"
+ ],
+ [
+  "Want to order for each other next round?",
+  "What would you pick for me, and what gave you the idea?",
+  "How do you like someone to get to know your tastes: by asking, or by paying attention?"
+ ],
+ [
+  "At IKEA, are you there for the furniture or the meatballs?",
+  "Which showroom would you move straight into?",
+  "What one thing would make a home feel finished for you?"
+ ],
+ [
+  "Salted egg everything, cheese tarts, rainbow bagels: which food craze did you queue for?",
+  "Was it worth the hype, or are you completely over it?",
+  "What did you get into because everyone else was, and end up loving for real?"
+ ],
+ [
+  "Hum a song and I'll try to guess it?",
+  "Where did you first hear that one?",
+  "What song feels like a fresh start to you?"
+ ],
+ [
+  "When did you last ask a stranger to take your photo?",
+  "Did they nail it, or cut everyone's heads off?",
+  "How easy do you find it to ask people for small favours?"
+ ],
+ [
+  "When did you last get scolded by a random auntie or uncle?",
+  "What did you do, and did you deserve it?",
+  "Which older people in your life have quietly looked out for you?"
+ ],
+ [
+  "When did you last plan a surprise for someone?",
+  "Did you pull it off, or did they find out?",
+  "What kind of surprise would genuinely delight you?"
+ ],
+ [
+  "When did you last do something a bit kiasu?",
+  "What did you queue early for, or grab extra of?",
+  "Where in life are you happy to go all out, and where are you learning to relax?"
+ ],
+ [
+  "Five stones, chapteh or zero point: which were you good at?",
+  "Could you still do it now? Want to try?",
+  "What did playing with whatever was around teach you as a kid?"
+ ],
+ [
+  "Did you ever go to Escape Theme Park or Wild Wild Wet as a kid?",
+  "Who took you, and what do you remember most about the day?",
+  "What did a perfect day out feel like back then, and what's the grown-up version now?"
+ ],
+ [
+  "Did you ever fill in friends' slam books or autograph books in school?",
+  "What did people usually write about you?",
+  "What would you love an old friend to write about you now?"
+ ],
+ [
+  "Would you share a table with strangers at a packed hawker centre?",
+  "Have you ever ended up chatting with your table neighbours?",
+  "What do those little moments of sharing space with strangers tell you about this city?"
+ ],
+ [
+  "Want to guess what I was like at fifteen?",
+  "Shall I tell you how close you got?",
+  "What part of your fifteen-year-old self are you glad is still around?"
+ ],
+ [
+  "Two truths and a lie, right now?",
+  "Which one did you think I'd fall for?",
+  "What's something true about you that people find hard to believe?"
+ ]
+];
 const KNOW = [
  [
   "What are you like at home when no one's around?",
@@ -8674,14 +9282,73 @@ const MIXED = { EI: "one of you thinks out loud and one thinks first", NS: "one 
 const ALL = new Map();
 Object.entries(DATA).forEach(([a, list]) => list.forEach((qs, i) => ALL.set(a + ":" + i, { id: a + ":" + i, aud: a, qs, match: false })));
 Object.entries(POOLS).forEach(([k, list]) => list.forEach((qs, i) => ALL.set("type-" + k + ":" + i, { id: "type-" + k + ":" + i, aud: "date", qs, match: true })));
+FRESH.forEach((qs, i) => ALL.set("new:" + i, { id: "new:" + i, aud: "date", qs, match: false, fresh: true }));
 KNOW.forEach((qs, i) => ALL.set("know:" + i, { id: "know:" + i, aud: "date", qs, match: false, know: true }));
 
 const $ = (s) => document.querySelector(s);
 const stack = $("#stack"), peelLabel = $("#peel-label"), saveBtn = $("#save"), backBtn = $("#back");
 const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.3-8.9-8.6C1.7 8.2 3.6 5 6.9 5c2 0 3.3 1.1 5.1 2.9C13.8 6.1 15.1 5 17.1 5c3.3 0 5.2 3.2 3.8 6.4C19 15.7 12 20 12 20z"/></svg>';
 
-let aud = "date", cur = null, layer = 0, busy = false, view = "play", savedOnly = false;
+let aud = "date", cur = null, layer = 0, busy = false, view = "play", savedOnly = false, historyOnly = false;
 let decks = {};
+/* History: "seen" lasts until you make everything new again; a session is one sitting
+   and starts fresh after 6 hours without use. */
+const SESSION_GAP = 6 * 60 * 60 * 1000;
+let hist = { seen: {}, session: { start: Date.now(), items: [] }, last: Date.now() };
+try { const h = JSON.parse(localStorage.getItem("askie-history") || "null"); if (h && h.seen && h.session) hist = h; } catch (e) {}
+if (Date.now() - (hist.last || 0) > SESSION_GAP) hist.session = { start: Date.now(), items: [] };
+const saveHist = () => { hist.last = Date.now(); try { localStorage.setItem("askie-history", JSON.stringify(hist)); } catch (e) {} };
+const isSeen = (id) => !!hist.seen[id];
+function markSeen(t, l) {
+  if (!t) return;
+  hist.seen[t.id] = Math.max(hist.seen[t.id] || 0, l + 1);
+  const it = hist.session.items.find((x) => x.id === t.id);
+  if (it) it.layer = Math.max(it.layer, l); else hist.session.items.unshift({ id: t.id, layer: l });
+  saveHist(); updateHistoryCounts();
+}
+function updateHistoryCounts() {
+  const n = hist.session.items.length;
+  const a = document.getElementById("session-n"), b = document.getElementById("history-n"), c = document.getElementById("seen-total");
+  if (a) a.textContent = n; if (b) b.textContent = n; if (c) c.textContent = Object.keys(hist.seen).length;
+}
+/* Each audience shows a deck of 150 threads at a time, drawn from the full bank.
+   "New deck" swaps in a different 150, preferring threads you haven't seen. */
+const DECK_SIZE = 150;
+let shown = {};
+try { const d = JSON.parse(localStorage.getItem("askie-decks") || "null"); if (d && typeof d === "object") shown = d; } catch (e) {}
+const saveShown = () => { try { localStorage.setItem("askie-decks", JSON.stringify(shown)); } catch (e) {} };
+function interleave(...lists) { const out = []; while (lists.some((l) => l.length)) lists.forEach((l) => { if (l.length) out.push(l.shift()); }); return out; }
+function makeDeck(a, avoid) {
+  const all = threadsFor(a);
+  let fresh = all.filter((t) => !isSeen(t.id) && !avoid.has(t.id));
+  if (fresh.length < DECK_SIZE && all.every((t) => isSeen(t.id) || avoid.has(t.id)) && all.filter((t) => !isSeen(t.id)).length < DECK_SIZE / 3) {
+    all.forEach((t) => { delete hist.seen[t.id]; }); saveHist(); updateHistoryCounts();
+    toast(`You've seen every ${AUD_NAMES[a]} question. Starting from the top.`);
+    fresh = all.filter((t) => !avoid.has(t.id));
+  }
+  const ids = (f) => shuffle(fresh.filter(f).map((t) => t.id));
+  let pick = ids((t) => t.fresh).concat(interleave(ids((t) => t.know), ids((t) => t.match), ids((t) => !t.know && !t.match && !t.fresh)));
+  pick = pick.slice(0, DECK_SIZE);
+  if (pick.length < DECK_SIZE) {
+    const have = new Set(pick);
+    const unseenAvoided = shuffle(all.filter((t) => !have.has(t.id) && !isSeen(t.id)).map((t) => t.id));
+    const rest = shuffle(all.filter((t) => !have.has(t.id) && isSeen(t.id)).map((t) => t.id));
+    pick = pick.concat(unseenAvoided, rest).slice(0, DECK_SIZE);
+  }
+  return pick;
+}
+function deckThreads(a) {
+  const valid = new Set(threadsFor(a).map((t) => t.id));
+  let ids = (shown[a] || []).filter((id) => valid.has(id));
+  if (ids.length < Math.min(DECK_SIZE, valid.size) * 0.8) { ids = makeDeck(a, new Set()); shown[a] = ids; saveShown(); }
+  return ids.map((id) => ALL.get(id));
+}
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById("toast"); if (!el) return;
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 3200);
+}
 const spots = {}; /* where you were in each audience tab */
 let types = { you: "ENFP", them: "ENFJ" };
 try { const t = JSON.parse(localStorage.getItem("askie-types") || "null"); if (t && typeof t === "object") types = { you: t.you || "", them: t.them || "" }; } catch (e) {}
@@ -8721,7 +9388,7 @@ function pairNote() {
 function threadsFor(a) {
   const gen = DATA[a].map((_, i) => ALL.get(a + ":" + i));
   if (a !== "date") return gen;
-  const m = KNOW.map((_, i) => ALL.get("know:" + i));
+  const m = FRESH.map((_, i) => ALL.get("new:" + i)).concat(KNOW.map((_, i) => ALL.get("know:" + i)));
   poolKeys().forEach((k) => (POOLS[k] || []).forEach((_, i) => m.push(ALL.get("type-" + k + ":" + i))));
   return m.concat(gen);
 }
@@ -8729,23 +9396,29 @@ function threadsFor(a) {
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 /* "who they really are" and personality-matched threads are dealt in rotation with the rest, so they show up early */
 function buildDeck() {
-  const all = threadsFor(aud);
+  const all = deckThreads(aud).filter((t) => !isSeen(t.id));
   const pick = (f) => shuffle(all.filter(f).map((t) => t.id));
-  const groups = [pick((t) => t.know), pick((t) => t.match), pick((t) => !t.know && !t.match)];
-  const d = [];
+  const groups = [pick((t) => t.know), pick((t) => t.match), pick((t) => !t.know && !t.match && !t.fresh)];
+  const d = pick((t) => t.fresh);
   while (groups.some((g) => g.length)) groups.forEach((g) => { if (g.length) d.push(g.shift()); });
-  if (cur && d[0] === cur.id && d.length > 1) d.push(d.shift());
   return d;
 }
 function nextThread() {
-  if (!decks[aud] || !decks[aud].length) decks[aud] = buildDeck();
-  return ALL.get(decks[aud].shift());
+  for (let tries = 0; tries < 2; tries++) {
+    if (!decks[aud] || !decks[aud].length) decks[aud] = buildDeck();
+    while (decks[aud].length) { const id = decks[aud].shift(); if (!isSeen(id) && ALL.get(id)) return ALL.get(id); }
+  }
+  /* everything in this deck has been seen: keep going with repeats and suggest a new deck */
+  toast("You've been through this deck. Tap New deck for fresh questions.");
+  const pool = deckThreads(aud).filter((t) => !cur || t.id !== cur.id);
+  return pool[Math.floor(Math.random() * pool.length)] || deckThreads(aud)[0];
 }
 
 /* ---------- Play ---------- */
 const cards = () => [...stack.querySelectorAll(".card")];
 
 function buildStack(animate) {
+  markSeen(cur, layer);
   stack.innerHTML = cur.qs.map((q, i) => `
     <article class="card" data-layer="${i}" aria-label="${LAYERS[i]} question">
       <div class="card-top"><span class="tag">${LAYERS[i]}</span><span class="num">${cur.match ? "for " + pairName() : (i + 1) + " of 3"}</span></div>
@@ -8796,7 +9469,7 @@ async function peel() {
   if (layer >= 2) { newQuestion(1); return; }
   busy = true;
   const top = cards()[layer];
-  layer++; updateControls();
+  layer++; updateControls(); markSeen(cur, layer);
   await flyOff(top, "translateY(-115%) rotate(-5deg)");
   top.style.transform = ""; top.classList.remove("dragging");
   layoutStack(); busy = false;
@@ -8863,9 +9536,11 @@ saveBtn.addEventListener("click", () => cur && toggleSave(cur.id, layer));
 
 /* ---------- Browse ---------- */
 const openThreads = new Set();
-function threadItem(t) {
-  return `<li><details data-t="${t.id}" ${openThreads.has(t.id) ? "open" : ""}>
-    <summary><span class="lq">${t.qs[0]}</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+function threadItem(t, note) {
+  const seen = isSeen(t.id);
+  const tag = note || (seen ? "Seen" : "");
+  return `<li class="${seen ? "is-seen" : ""}"><details data-t="${t.id}" ${openThreads.has(t.id) ? "open" : ""}>
+    <summary><span class="lq">${t.qs[0]}${tag ? `<span class="seen-tag label">${tag}</span>` : ""}</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
     <div class="layers">
       ${t.qs.map((q, l) => { const on = isSaved(keyOf(t.id, l)); return `<div class="row"><span class="sw" style="background:${SWATCH[l]}"></span>
         <span class="txt"><span class="lname label">${LAYERS[l]}</span>${q}</span>
@@ -8878,6 +9553,15 @@ function renderBrowse(keepOpen) {
   const list = $("#list"), term = $("#search").value.trim().toLowerCase();
   $("#saved-n").textContent = saved.length;
   if (!keepOpen) openThreads.clear();
+  if (historyOnly) {
+    const items = hist.session.items.map((x) => ({ t: ALL.get(x.id), layer: x.layer })).filter((x) => x.t && (!term || x.t.qs.some((q) => q.toLowerCase().includes(term))));
+    $("#count").textContent = "";
+    list.innerHTML = `<li class="hist-head"><p class="label">This session · ${items.length} question${items.length === 1 ? "" : "s"}</p>
+        <button type="button" class="text-btn" data-new-session>Start a new session</button></li>`
+      + (items.length ? items.map((x) => threadItem(x.t, `${AUD_NAMES[x.t.aud]} · reached ${LAYERS[x.layer]}`)).join("")
+        : `<li class="empty">${term ? "Nothing from this session matches that search." : "Questions you go through will show up here."}</li>`);
+    return;
+  }
   if (savedOnly) {
     const items = saved.filter((s) => !term || s.q.toLowerCase().includes(term));
     $("#count").textContent = `${items.length} saved`;
@@ -8887,13 +9571,17 @@ function renderBrowse(keepOpen) {
       : `<li class="empty">${term ? "No saved questions match that search." : "Nothing saved yet. Tap the heart on any question to keep it here."}</li>`;
     return;
   }
-  const rows = threadsFor(aud).filter((t) => !term || t.qs.some((q) => q.toLowerCase().includes(term)));
-  const k = rows.filter((t) => t.know), m = rows.filter((t) => t.match), g = rows.filter((t) => !t.match && !t.know);
-  $("#count").textContent = term ? `${rows.length} threads match` : `${AUD_NAMES[aud]} · ${rows.length} threads · ${rows.length * 3} questions`;
-  if (!rows.length) { list.innerHTML = `<li class="empty">Nothing matches that search. Try another word.</li>`; return; }
-  const sec = (title, items) => items.length ? `<li class="group-h">${title}</li>` + items.map(threadItem).join("") : "";
+  const inDeck = deckThreads(aud);
+  const rows = inDeck.filter((t) => !term || t.qs.some((q) => q.toLowerCase().includes(term)));
+  const k = rows.filter((t) => t.know), m = rows.filter((t) => t.match), g = rows.filter((t) => !t.match && !t.know && !t.fresh);
+  $("#count").textContent = "";
+  const head = `<li class="hist-head"><p class="label">${term ? `${rows.length} threads match` : `${AUD_NAMES[aud]} · ${inDeck.length} threads · ${inDeck.length * 3} questions`}</p>
+      <button type="button" class="text-btn" data-new-deck>New deck</button></li>`;
+  if (!rows.length) { list.innerHTML = head + `<li class="empty">Nothing matches that search. Try another word.</li>`; return; }
+  const sec = (title, items) => items.length ? `<li class="group-h">${title}</li>` + items.map((t) => threadItem(t)).join("") : "";
+  const g2 = rows.filter((t) => t.fresh).concat(g);
   const grouped = k.length || m.length;
-  list.innerHTML = sec("Who they really are", k) + sec("For " + pairName(), m) + (grouped ? sec("More " + AUD_NAMES[aud] + " questions", g) : g.map(threadItem).join(""));
+  list.innerHTML = head + sec("Who they really are", k) + sec("For " + pairName(), m) + (grouped ? sec("More " + AUD_NAMES[aud] + " questions", g2) : g2.map((t) => threadItem(t)).join(""));
 }
 $("#list").addEventListener("toggle", (e) => {
   const d = e.target; if (!d.dataset || !d.dataset.t) return;
@@ -8902,14 +9590,48 @@ $("#list").addEventListener("toggle", (e) => {
 $("#list").addEventListener("click", (e) => {
   const s = e.target.closest("[data-save]");
   if (s) { const [id, l] = s.dataset.save.split("@"); toggleSave(id, +l); return; }
+  if (e.target.closest("[data-new-session]")) { newSession(); return; }
+  if (e.target.closest("[data-new-deck]")) { newDeck(); return; }
   const p = e.target.closest("[data-play]");
   if (p) { cur = ALL.get(p.dataset.play); layer = 0; setView("play"); buildStack(true); window.scrollTo({ top: 0 }); }
 });
 $("#search").addEventListener("input", () => renderBrowse(false));
-$("#saved-only").addEventListener("click", () => {
-  savedOnly = !savedOnly;
+function setFilter(which) {
+  savedOnly = which === "saved" ? !savedOnly : false;
+  historyOnly = which === "history" ? !historyOnly : false;
   $("#saved-only").setAttribute("aria-pressed", savedOnly ? "true" : "false");
+  $("#history-only").setAttribute("aria-pressed", historyOnly ? "true" : "false");
   renderBrowse(false);
+}
+$("#saved-only").addEventListener("click", () => setFilter("saved"));
+$("#history-only").addEventListener("click", () => setFilter("history"));
+
+function newSession() {
+  hist.session = { start: Date.now(), items: [] };
+  markSeen(cur, layer);
+  toast("New session started");
+  if (view === "browse") renderBrowse(false);
+}
+function newDeck() {
+  shown[aud] = makeDeck(aud, new Set((shown[aud] || []).concat(cur ? [cur.id] : [])));
+  saveShown();
+  decks[aud] = null; delete spots[aud];
+  toast(`New deck · ${shown[aud].length} ${AUD_NAMES[aud]} threads`);
+  if (view === "browse") { renderBrowse(false); return; }
+  newQuestion(1);
+}
+$("#new-deck").addEventListener("click", newDeck);
+function resetSeen() {
+  hist = { seen: {}, session: { start: Date.now(), items: [] }, last: Date.now() };
+  decks = {}; shown = {}; saveShown();
+  markSeen(cur, layer);
+  toast("Every question is new again");
+  if (view === "browse") renderBrowse(false);
+}
+$("#open-history").addEventListener("click", () => {
+  setView("browse");
+  if (!historyOnly) setFilter("history");
+  window.scrollTo({ top: 0 });
 });
 
 /* ---------- Types picker ---------- */
@@ -8939,7 +9661,9 @@ matchSwitch.addEventListener("click", () => {
 const sheet = $("#settings"), scrim = $("#scrim");
 function openSettings() { sheet.hidden = false; scrim.hidden = false; $("#close-settings").focus(); }
 function closeSettings() { sheet.hidden = true; scrim.hidden = true; $("#open-settings").focus(); }
-$("#open-settings").addEventListener("click", openSettings);
+$("#open-settings").addEventListener("click", () => { updateHistoryCounts(); openSettings(); });
+$("#new-session").addEventListener("click", newSession);
+$("#reset-seen").addEventListener("click", resetSeen);
 $("#close-settings").addEventListener("click", closeSettings);
 /* Jokes panel */
 const jokesSheet = $("#jokes");
@@ -9012,10 +9736,10 @@ document.addEventListener("keydown", (e) => {
 syncTypes();
 cur = nextThread();
 buildStack(false);
+updateHistoryCounts();
 $("#saved-n").textContent = saved.length;
 setView(location.hash === "#browse" ? "browse" : "play", true);
 </script>
 
 </body>
 </html>
-
